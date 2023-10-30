@@ -1,82 +1,102 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/LjrqFr82)
-[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-7f7980b617ed060a017424585567c406b6ee15c891e84e1186181d67ecf80aa0.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=12544618)
-# Atividade: Consenso e API (`06-consensus`)
+# Implementação Blockchain
 
-Esta atividade tem como objetivo implementar uma API de acesso ao nosso blockchain. Isso permitirá a interação entre múltiplos nós que implementem nosso protocolo. Outro objetivo desta atividade é definir o modelo de consenso.
+Professor: [Danilo Curvelo](https://github.com/danilocurvelo)
 
-## Metodologia e Avaliação
+Aluno: [Daniel Luan Lourenço de Lima](https://github.com/danieluan)
 
-Essa atividade encerra o projeto de desenvolvimento de nosso blockchain privado. A entrega será realizada no Github Classroom mas a avaliação será feita no formato de apresentação ao professor, até as datas estabelecidas. O trabalho deve ser desenvolvido **individualmente ou em dupla** (O GitHub Classroom gerencia as duplas). Plágios não serão tolerados, resultando em nota zero para todos os envolvidos.
+Ao longo da primeira unidade da disciplina IMD0913 - Blockchain e Aplicações Descentralizadas foi implementado uma estrutura de dado semelhante ao Blokchain do Bitcoin, usando validações de PoW (Proof Of Work), Assinaturas digitais e, por fim, uma API para realizar o consenso dos nós cadastrados na rede.
 
-## Instruções de submissão
+# Blockchain
 
-Submissão deve ser feita a partir do GitHub Classroom até às 23:59 do dia 09/11/2022 (mesmo dia da apresentação). Basta realizar o *commit* do seu arquivo `blockchain.py` no repositório privado criado para você a partir do link disponibilizado. Qualquer dúvida nesta etapa consulte o professor no Discord.
+## Endpoints
 
-## Instalação
+### Endpoint: /transactions/create [POST]
+- **Descrição**: Cria uma nova transação e a adiciona à mempool (lista de transações).
+- **Parâmetros**:
+    - sender: Endereço do remetente da transação.
+    - recipient: Endereço do destinatário da transação.
+    - amount: Valor da transação.
+    - privWifKey: Chave privada para assinar a transação.
+- **Respostas**:
+    - 200: Transação em processamento.
+    - 406: Falha ao processar devido a dados ausentes ou inválidos.
 
-Baixe o arquivo `./blockchain.py` para obter o *boilerplate* para esta atividade. Caso seja necessário, utilize o gerenciador de pacotes [pip](https://pip.pypa.io/en/stable/) para instalar os módulos necessários. Todos os *boilerplates* são compatíveis com o Python 3+.
+### Endpoint: /chain [GET]
+- **Descrição**: Retorna todos os blocos presentes na cadeia no momento.
+- **Respostas**:
+    - 200: Retorna a cadeia de blocos no formato JSON.
 
-## Descrição
+### Endpoint: /transactions/mempool [GET]
+- **Descrição**: Retorna todas as transações presentes na mempool no momento.
+- **Respostas**:
+    - 200: Retorna a mempool no formato JSON.
 
-Sua API precisará implementar 6 *end-points*:
+### Endpoint: /mine [GET]
+- **Descrição**: Realiza a mineração de um novo bloco e o adiciona à cadeia.
+- **Respostas**:
+    - Retorna os detalhes do bloco recém-minerado no formato JSON.
 
-- **[POST]** `/transactions/create` para criar uma nova transação a ser incluída no próximo bloco. No corpo da requisicão HTTP, usando POST, inclua as informações necessárias para criação de uma nova transação.
-- **[GET]** `/transactions/mempool` para retornar a *memory pool* do nó.
-- **[GET]** `/mine` para informar o nó para criar e minerar um novo bloco. Ou seja, um nó que for requisitado a partir desse end-point deve pegar todas as transações incluídas em seu memory pool, montar um bloco e minera-lo.
-- **[GET]** `/chain` para retornar o blockchain completo daquele nó.
-- **[POST]** `/nodes/register` para aceitar uma lista de novos nós no formato de URLs. Note que já existe uma variável do tipo conjunto (*set*) chamado `nodes` para armazenar os nós registrados.
-- **[GET]** `/nodes/resolve` para executar o modelo de consenso, resolvendo conflitos e garantindo que contém a cadeia de blocos correta. Basicamente o que deve ser feito pelo nó é solicitar a todos os seus nós registrados os seus respectivos blockchains. Então deve-se conferir se o blockchain é válido, e, se for maior (mais longo) que o atual, deve substitui-lo.
+### Endpoint: /nodes/register [POST]
+- **Descrição**: Registra nós adicionais na rede.
+- **Parâmetros**:
+    - nodes: Lista de URLs dos nós a serem registrados.
+- **Respostas**:
+    - 200: Nós registrados com sucesso.
+    - 400: Erro se a lista de nós estiver vazia.
 
-Para auxiliar no desenvolvimento do consenso, implemente os métodos `isValidChain()` e `resolveConflicts()`. As assinaturas e a descrição já estão no código exemplo.
+### Endpoint: /nodes/resolve [GET]
+- **Descrição**: Executa a resolução de conflitos entre os blocos da cadeia na rede.
+- **Respostas**:
+    - 200: Se a cadeia foi atualizada com sucesso.
+    - Se nenhuma cadeia maior e válida for encontrada: Retorna mensagem indicando a ausência de cadeias maiores e válidas.
 
-Utilize qualquer *framework* que desejar para implementar a API. Uma sugestão é o *framework* [Flask](https://palletsprojects.com/p/flask/), bastante leve e de fácil utilização. Instale usando o `pip`. Veja como é simples criar um _end-point_:
 
-```python
-from flask import Flask
-app = Flask(__name__)
+# Como executar
 
-@app.route('/hello', methods=['GET'])
-def hello():
-    return "Hello World!"
+## Configuração 
 
-if __name__ == '__main__':
-    app.run(port=5000)
+O blockchain foi inteiramente implementado usando `Python`, por tanto é necessário ter Python3+ e pip instalado. Sendo assim é recomendado utilizar um ambiente isolado para executar o programa.
+
+Rode os comandos para baixar o repositório localmente e acessá-lo no terminal.
+
+```bash
+git clone https://github.com/DanieLuan/blockchain-implementation.git
+```
+```bash
+cd blockchain-implementation
 ```
 
-Se eu executar esse código, temos um serviço web em execução. Caso entre em `http://127.0.0.1:5000/hello`, o método `hello()` será executado!
+Após isso, certifique-se de baixar o virtualenv.
 
-Caso precise fazer requisições HTTP no Python, você pode utilizar o módulo `requests`. Também é bem simples, por exemplo, para requisitar o blockchain completo do nó `127.0.0.1:5001`:
-
-```python
-import requests
-
-response = requests.get('http://127.0.0.1:5001/chain')
-obj = response.json()
+```bash
+pip install virtualenv
 ```
 
-Para testar, será necessário executar no mínimo dois nós simultaneamente, e no caso de ser na mesma máquina, as instâncias em execução devem usar portas diferentes (por exemplo, porta 5000 e 5001). Você pode testar no seu navegador, usando _curl_, ou então usando o [Postman](https://www.postman.com/) ou [Insomnia](https://insomnia.rest/).
+Agora crie o ambiente na pasta local usando o nome de sua preferência. Nesse caso estamos usando `venv`.
 
-## Roteiro da apresentação
-
-Para a apresentação, já se organize para realizar os seguintes passos:
-
-```
-[  ] Sobe um primeiro nó (ex: porta 5001)
-[  ] Sobe um segundo nó (ex: porta 5002)
-[  ] Cria uma nova transação (tx) no nó #1
-[  ] Confere o mempool do nó #1
-[  ] Cria e minera um novo bloco no nó #1
-[  ] Cria e minera outro bloco (sem transações) no nó #1
-[  ] Confere a atual chain do nó #1
-[  ] Registra o nó #2 no nó #1
-[  ] Resolve (consenso) o nó #1 (o blockchain não deve mudar)
-[  ] Cria e minera um único bloco (sem transações) no nó #2
-[  ] Confere a atual chain do nó #2
-[  ] Registra o nó #1 no nó #2
-[  ] Resolve (consenso) o nó #2 (o blockchain deve mudar para a chain do nó #1)
-[  ] Confere a atual chain do nó #2
+```bash
+virtualenv venv
 ```
 
+Use o comando abaixo para entrar no ambiente virtual criado.
 
-## Licença
-[MIT](https://choosealicense.com/licenses/mit/)
+```bash
+source venv/bin/activate
+```
+
+Por fim, instale as dependências necessárias.
+
+```bash
+pip install -r requirements.txt
+```
+
+## Execução
+
+Para rodar um nó, basta rodar o programa usando.
+
+```bash
+blockchain-api/bin/python api.py --port <port_number>
+```
+
+A flag `--port` foi utilizada para facilitar a implementação de múltiplas instâncias do mesmo programa em portas diferentes do mesmo computador. As portas usadas para os testes foram as `5000` e `5001`, qualquer outra porta deverá ser cadastrada usando o devido endpoint.
+
