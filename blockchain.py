@@ -1,5 +1,6 @@
-import hashlib, json, copy, time, random, time
-import bitcoinlib 
+import hashlib, json, copy, time, random, time, requests
+from loguru import logger
+import bitcoinlib
 
 DIFFICULTY = 4 # Quantidade de zeros (em hex) iniciais no hash valido.
 
@@ -11,6 +12,14 @@ class Blockchain(object):
         self.memPool = []
         self.nodes = set() # Conjunto para armazenar os nós registrados.
         self.createGenesisBlock()
+
+    def registerNode(self, address):
+        '''Registra um novo nó no conjunto de nós.'''
+        self.nodes.add(address)
+        return self.nodes
+    
+    def getNodes(self):
+        return self.nodes
 
     def createGenesisBlock(self):
         '''Cria, minera e retorna o bloco gênesis do blockchain. Chamado somente no construtor.'''
@@ -39,6 +48,14 @@ class Blockchain(object):
             nonce += 1
         return nonce
     
+    def chainValue(self, chain):
+        '''Retorna o valor do blockchain passado como argumento.'''
+        value = 0
+        for block in chain:
+            for tx in block['transactions']:
+                value += tx['amount']
+        return value
+    
     def isValidChain(self, chain):
         '''
         Dado uma chain passada como parâmetro, faz toda a verificação no blockchain se cada uma dos blocos é válido:
@@ -48,11 +65,47 @@ class Blockchain(object):
          4. Hash do bloco anterior válido.
         Retorna True se válido, False caso contrário.
         '''
-        pass
+        for block in chain:
+            
+            i = block['index']
+            previousBlock = chain[i-1] if i > 0 else chain[0]
+            
+            
+            if not self.isValidProof(block, block['nonce']):
+                logger.info(f'Block {i} has invalid nonce.')
+                return False
+            
+            if len(block['transactions']) == 0 and i != 0:
+                logger.info(f'Block {i} has no transactions.')
+                return False
+            
+            for tx in block['transactions']:
+                logger.info(f'Verifying transaction {tx}.')
+                if not Blockchain.isValidTransaction(tx):
+                    logger.info(f'Block {i} has invalid signature.')
+                    return False
+            
+            if block['merkleRoot'] != self.generateMerkleRoot(block['transactions']):
+                logger.info(f'Block {i} has invalid merkleRoot.')
+                return False
+            
+            if block['previousHash'] != self.getBlockID(previousBlock) and i != 0:
+                logger.info(f'Block {i} has invalid PreviousHash.')
+                return False
+        return True
 
     def resolveConflicts(self):
         ''' Consulta todos os nós registrados, e verifica se algum outro nó tem um blockchain mais comprido e válido. Em caso positivo, substitui seu próprio chain '''
-        pass
+        for node in self.nodes:
+            response = requests.get(node + '/chain')
+            if response.status_code == 200:
+                node_chain = response.json()
+                if self.isValidChain(node_chain):
+                    if self.chainValue(node_chain) > self.chainValue(self.chain):
+                        self.chain = node_chain
+                        return True # Chain era mais longo e válido.
+        return False # Chain ou não era mais longo.
+
 
     @staticmethod
     def isValidProof(block, nonce):
@@ -71,9 +124,14 @@ class Blockchain(object):
         }
  
         tx['signature'] = Blockchain.sign(privWifKey, json.dumps(tx, sort_keys=True))
-        self.memPool.append(tx)
-
-        return tx
+        
+        if Blockchain.isValidTransaction(tx):    
+            self.memPool.append(tx)
+            logger.info(f'Transaction index {len(self.memPool)} is valid.')
+            return tx
+        else:
+            logger.info(f'Transaction {tx} is invalid.')
+            return None
 
     @staticmethod
     def generateMerkleRoot(transactions):
@@ -142,6 +200,15 @@ class Blockchain(object):
         '''Verifica se a assinatura é correspondente a mensagem e o endereço BTC.
         Você pode verificar aqui também: https://tools.bitcoin.com/verify-message/'''
         return bitcoinlib.ecdsa_verify(message, signature, address)
+    
+    @staticmethod
+    def isValidTransaction(tx):
+        tx_copy = tx.copy()
+        sender = tx_copy['sender']
+        signature = tx_copy['signature']
+        tx_copy.pop('signature', None)
+        message = json.dumps(tx_copy, sort_keys=True)
+        return Blockchain.verifySignature(sender, signature, message)
 
     def printChain(self):
 
