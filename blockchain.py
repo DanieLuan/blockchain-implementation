@@ -75,10 +75,6 @@ class Blockchain(object):
                 logger.info(f'Block {i} has invalid nonce.')
                 return False
             
-            if len(block['transactions']) == 0 and i != 0:
-                logger.info(f'Block {i} has no transactions.')
-                return False
-            
             for tx in block['transactions']:
                 logger.info(f'Verifying transaction {tx}.')
                 if not Blockchain.isValidTransaction(tx):
@@ -103,8 +99,8 @@ class Blockchain(object):
                 if self.isValidChain(node_chain):
                     if self.chainValue(node_chain) > self.chainValue(self.chain):
                         self.chain = node_chain
-                        return True # Chain era mais longo e válido.
-        return False # Chain ou não era mais longo.
+                        return True
+        return False
 
 
     @staticmethod

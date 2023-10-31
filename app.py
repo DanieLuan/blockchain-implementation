@@ -23,13 +23,12 @@ def createTransaction():
     
     if tx == None:
         return "Transaction is invalid.", 406
-    return "Transaction is processing.", 200
+    return "Transaction is waiting to get into a block.", 200
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
     """Response all the blocks in the chain at the moment"""
     
-    bc.printChain()
     response = bc.chain
     return jsonify(response), 200
 
@@ -51,7 +50,7 @@ def mine():
 
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
-    """"""
+    """Register a nodes list into this node."""
     node_request = request.get_json()
     nodes = node_request['nodes']
     
@@ -65,17 +64,17 @@ def register_nodes():
 
 @app.route('/nodes/resolve', methods=['GET'])
 def nodes_resolve():
+    """Interact with all nodes registred and resolve possible conflicts."""
     if bc.resolveConflicts():
         return "Blockchain updated.", 200
     else:
         return "Blockchains larger and valid not found", 200
 
 def create_app_instance(port):
-    app.run(port=port, debug=True)
+    app.run(port=port)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run multiple instances of the Flask app on different ports')
     parser.add_argument('--port', type=int, default=5001, help='Port number for the app instance')
     args = parser.parse_args()
     create_app_instance(args.port)
-

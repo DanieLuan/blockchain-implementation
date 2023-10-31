@@ -95,7 +95,7 @@ pip install -r requirements.txt
 Para rodar um nó, basta rodar o programa usando.
 
 ```bash
-blockchain-api/bin/python api.py --port <port_number>
+blockchain-api/bin/python app.py --port <port_number>
 ```
 
 A flag `--port` foi utilizada para facilitar a implementação de múltiplas instâncias do mesmo programa em portas diferentes do mesmo computador. As portas usadas para os testes foram as `5000` e `5001`, qualquer outra porta deverá ser cadastrada usando o devido endpoint.
